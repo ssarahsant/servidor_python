@@ -4,6 +4,17 @@ from http.server import SimpleHTTPRequestHandler
 import socketserver
 from urllib.parse import urlparse, parse_qs
 
+# importar a função (do outro arquivo) para salvar os dados no banco de dados
+from database import conectar 
+
+# Atribui para uma variaveis a função do outro arquivo
+conexao = conectar()
+
+# Importa a bilbioteca (conecta com os comandos do código com o workbench)
+from mysql import connector
+
+
+
 # biblioteca que cipritografa as senhas
 import hashlib
 
@@ -41,29 +52,12 @@ class MyHandler(SimpleHTTPRequestHandler):
                 self.send_error(404, "File not found")
 
         # criação de rota para página de suscesso de login
-        # elif self.path == '/turmas':
-        #     try:
-        #         # Responde ao cliente com a menssagem de login/senha incorreta
-        #         self.send_response(200)
-        #         self.send_header('Content-type', 'text/html; charset=utf-8')
-        #         self.end_headers()
-
-        #         # Lê o conteúdo da página html
-        #         with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as login_file:
-        #             content = login_file.read()            
-        #         self.wfile.write(content.encode('utf-8'))
-
-        #     except FileNotFoundError:
-        #         self.send_error(404, "File not found")
-
-        # criação de rota para página de suscesso de login
         elif self.path == '/usuario_cadastrado':
             try:
                 # Responde ao cliente com a menssagem de login/senha incorreta
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
                 self.end_headers()
-
                 # Lê o conteúdo da página html
                 with open(os.path.join(os.getcwd(), 'sucesso.html'), 'r', encoding='utf-8') as login_file:
                     content = login_file.read()            
@@ -180,65 +174,81 @@ class MyHandler(SimpleHTTPRequestHandler):
             # Se não for a rota "/login", continua com o comportamento padrão
             super().do_GET()
 
-    # FUNÇÕES PARA REAIZAR AS VALIDAÇÕES DE LOGIN
+    # FUNÇÕES PARA REAIZAR AS VALIDAÇÕES DE LOGIN 
+
+    # Função para adicionar um professor não cadastrado no banco 
     def usuario_existente(self, login, senha):
-        # Verifica se o login já existe no arquivo
-        with open('dados.login.txt', 'r', encoding='utf-8') as file:
-            for line in file:
-                if line.strip():
-                    stored_login, stored_senha_hash, stored_nome = line.strip().split(';')
-                    if login == stored_login:
-                        senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest() 
-                        print("cheguei aqui significando que localizei o login informado")
-                        print("senha: " + senha)
-                        print(" senha_armazenada: " + senha)
-                        print(stored_senha_hash)
-                        return senha_hash == stored_senha_hash
+        # Atribui para uma variavel os comando do banco de dados através de uma biblioteca para  programa em python
+        cursor = conexao.cursor()
+        # Seeleciona a tabelaonde se armazena os dados de login
+        cursor.execute("SELECT senha FROM dados_login WHERE login = %s", (login,))
+        # Faz a leitura linha a lina da tabela localizada no banco de dados 
+        resultado = cursor.fetchone()
+        cursor.close()
+
+        if resultado:           
+            senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest() 
+            return senha_hash == resultado[0]
         return False
     
-    # Funções para Login do Professor
-    def adicionar_usuário(self, login, senha, nome):
-        senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()  
-        with open('dados.login.txt', 'a', encoding='UTF-8') as file:
-            file.write(f'{login};{senha_hash};{nome}\n')
-
-
-    def remover_ultima_linha(self, arquivo):
-        with open(arquivo, 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-        with open(arquivo, 'w', encoding='utf-8') as file:
-            file.writelines(lines[:-1])
+    
+    # Função para verificar se o Login do Professor ja existe no banco
+    def adicionar_usuario(self, login, senha, nome):
+        cursor = conexao.cursor()
+        # Criptografa a senha antes de ser inseridade no banco
+        senha_hash = hashlib.sha256(senha.encode('utf-8')).hexdigest()
+        # Comando que insere os valores no banco de dados
+        cursor.execute("INSERT INTO dados_login (login,senha,nome) VALUES (%s, %s, %s)", (login,senha_hash,nome))
+        conexao.commit()
+        cursor.close()
 
     # Funções para Cadastro da Turma
-    def turma_existente(self, id, turma):
-        with open('dados_turma.txt', 'r', encoding='utf-8') as file:
-            for line in file:
-                if line.strip():
-                    stored_id, stored_turma = line.strip().split(';')
-                    if id == stored_id:
-                        if turma == stored_turma:
-                            return True
+    def turma_existente(self,  turma):
+        # Atribui para uma variavel os comando do banco de dados através de uma biblioteca para  programa em python
+        cursor = conexao.cursor()
+        # Seleciona a tabelaonde se armazena o nome da turma
+        cursor.execute("SELECT descricao FROM turmas WHERE descricao = %s", (turma,))
+        # Faz a leitura linha a lina da tabela localizada no banco de dados 
+        resultado = cursor.fetchone()
+        cursor.close()
+
+        if resultado:         
+            # Se tiver conteúdo retrona verdadeiro para o post  
+            return True
+        # Se NÃO tiver conteúdo retrona falso para o post  
         return False
     
-    def adicionar_turma(self, id, turma):
-        with open('dados_turma.txt', 'a', encoding='UTF-8') as file:
-            file.write(f'{id};{turma}\n')
+    def adicionar_turma(self, turma):
+        cursor = conexao.cursor()
+        # Comando que insere os valores no banco de dados
+        cursor.execute("INSERT INTO turmas (descricao) VALUES (%s)", (turma,))
+        conexao.commit()
+        cursor.close()
+ 
 
     
     # Funções para Cadastro da Atividade
-    def atividade_existente(self, codigo, descricao):
-        with open('atividades_turmas.txt', 'r', encoding='utf-8') as file:
-            for line in file:
-                if line.strip():
-                    stored_codigo, stored_descricao = line.strip().split(';')
-                    if codigo == stored_codigo:
-                        if descricao == stored_descricao:
-                            return True
+    def atividade_existente(self, descricao):
+        # Atribui para uma variavel os comando do banco de dados através de uma biblioteca para  programa em python
+        cursor = conexao.cursor()
+        # Seleciona a tabelaonde se armazena a descrição da atividade
+        cursor.execute("SELECT descricao FROM atividades WHERE descricao = %s", (descricao,))
+        # Faz a leitura linha a lina da tabela localizada no banco de dados 
+        resultado = cursor.fetchone()
+        cursor.close()
+
+        if resultado:         
+            # Se tiver conteúdo retrona verdadeiro para o post  
+            return True
+        # Se NÃO tiver conteúdo retrona falso para o post  
         return False
     
-    def adicionar_atividade(self, codigo, descricao):
-        with open('atividades_turmas.txt', 'a', encoding='UTF-8') as file:
-            file.write(f'{codigo};{descricao}\n')
+    def adicionar_atividade(self, descricao):
+        cursor = conexao.cursor()
+        # Comando que insere os valores no banco de dados
+        cursor.execute("INSERT INTO atividades (descricao) VALUES (%s)", (descricao,))
+        conexao.commit()
+        cursor.close()
     
 
     # Captura dos dados do formulário através do 'action' inserir nor 'form'
@@ -251,11 +261,6 @@ class MyHandler(SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length).decode('utf-8')
             # Parseia os dados do formulário
             form_data = parse_qs(body, keep_blank_values=True)
-
-            # Exibe os dados no terminal
-            print("Dados do formulário:")
-            print("Email:", form_data.get('email', [''])[0])
-            print("Senha:", form_data.get('senha', [''])[0])
 
             # Verifica se o usuário já existe
             login = form_data.get('email', [''])[0]
@@ -270,21 +275,28 @@ class MyHandler(SimpleHTTPRequestHandler):
                 return 
         
             else:
+                # Verifica se o usuario já está cadastrado. Caso não esteja foi caso de login errado
+                cursor = conexao.cursor()
+                cursor.execute("SELECT login FROM dados_login WHERE login = %s", (login,))
+                resultado = cursor.fetchone()
+
                 # Verifica se o login já existe no arquivo
-                if any(line.startswith(f"{login};") for line in open('dados.login.txt', 'r', encoding='utf-8')):
+                if resultado:
                     # Redireciona o cliente para a rota "/login_failed"
                     self.send_response(302)
                     self.send_header('Location', '/login_failed')
                     self.end_headers()
+                    cursor.close()
                     # Adicionando um return para evitar a execução do restante do código
                     return 
 
                 else:
                     # Redireciona o cliente para a rota "/cadastro" com os dados de login e senha
-                    self.adicionar_usuário(login, senha, nome='None')
+                    # self.adicionar_usuário(login, senha, nome='None')
                     self.send_response(302)
                     self.send_header('Location', f'/cadastro?login={login}&senha={senha}')
                     self.end_headers()
+                    cursor.close()
                     # Adicionando um return para evitar a execução do restante do código
                     return  
 
@@ -302,63 +314,39 @@ class MyHandler(SimpleHTTPRequestHandler):
             senha = form_data.get('senha', [''])[0]
             nome = form_data.get('nome', [''])[0]
 
-            senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()
+            # senha_hash = hashlib.sha256(senha.encode('UTF-8')).hexdigest()
 
-            # Verifica se o usuário já existe
-            if self.usuario_existente(login, senha):
-                # Atualiza o arquivo com o nome, se a senha estiver correta
-                with open('dados.login.txt', 'r', encoding='utf-8') as file:
-                    lines = file.readlines()
+            # Chama a função para adicionar o usuário
+            self.adicionar_usuario(login, senha, nome)
 
-                with open('dados.login.txt', 'w', encoding='utf-8') as file:
-                    for line in lines:
-                        stored_login, stored_senha, stored_nome = line.strip().split(';')
-                        print(stored_login, stored_senha, stored_nome)
-
-                        if login == stored_login and senha_hash == stored_senha:
-                            line = f"{login};{senha_hash};{nome}\n"
-                        file.write(line)
-
-                # Redireciona o cliente para onde desejar após a confirmação
-                with open(os.path.join(os.getcwd(), 'sucesso.html'), 'r') as login_file:
-                    content = login_file.read()
-                self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-                self.wfile.write(content.encode('utf-8'))
-
-            else:
-                # Se o usuário não existe ou a senha está incorreta, redireciona para outra página
-                self.remover_ultima_linha('dados.login.txt')
-                self.send_response(302)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.end_headers()
-                self.wfile.write("A senha não confere. Retome o procedimento!".encode('utf-8'))
+            # A apresenta a rota de sucesso
+            self.send_response(302)
+            self.send_header('Location', '/cad_turma')
+            self.end_headers()
+            return
 
 
         # CADASTRAR TURMA
         elif self.path == '/cad_turma':
             # CAPTURA AS INFORMAÇÕES
-            # Cadastra a turma se ela não existir
             content_length = int(self.headers['Content-Length'])
             # Lê o corpo da requisição
             body = self.rfile.read(content_length).decode('utf-8')
             # Parseia os dados do formulário
             form_data = parse_qs(body, keep_blank_values=True)
 
-            id = form_data.get('id', [''])[0]
             turma = form_data.get('turma', [''])[0]
 
             # Verifica se o valor está vazio e da erro
-            if id.strip() == '' or turma.strip() == '':
+            if turma.strip() == '':
                 # Se algum campo estiver vazio, redireciona para a página de falha cadastro 
                 self.send_response(302)
                 self.send_header("Location", "/failed_turma")
                 self.end_headers()
                 return
         
-            # Verifica se o usuário já existe
-            elif self.turma_existente(id, turma) == True:
+            # Verifica se já existe
+            elif self.turma_existente(turma) == True:
                 # Se algum campo estiver vazio, redireciona para a página de falha cadastro 
                 self.send_response(302)
                 self.send_header("Location", "/failed_turma")
@@ -367,7 +355,7 @@ class MyHandler(SimpleHTTPRequestHandler):
 
             # Adiciona a turma
             else:
-                self.adicionar_turma(id, turma)
+                self.adicionar_turma(turma)
                 self.send_response(302)
                 self.send_header('Location', '/usuario_cadastrado')
                 self.end_headers()
@@ -383,13 +371,10 @@ class MyHandler(SimpleHTTPRequestHandler):
             # Parseia os dados do formulário
             form_data = parse_qs(body, keep_blank_values=True)
 
-            codigo = form_data.get('codigo', [''])[0]
             descricao = form_data.get('descricao', [''])[0]
 
-            print(codigo, descricao)
-
             # Verifica se o valor está vazio e da erro
-            if codigo.strip() == '' or descricao.strip() == '':
+            if descricao.strip() == '':
                 # Se algum campo estiver vazio, redireciona para a página de falha cadastro 
                 self.send_response(302)
                 self.send_header("Location", "/failed_turma")
@@ -397,7 +382,7 @@ class MyHandler(SimpleHTTPRequestHandler):
                 return
         
             # Verifica se o usuário já existe
-            elif self.atividade_existente(codigo, descricao) == True:
+            elif self.atividade_existente(descricao) == True:
                 # Se algum campo estiver vazio, redireciona para a página de falha cadastro 
                 self.send_response(302)
                 self.send_header("Location", "/failed_turma")
@@ -406,7 +391,7 @@ class MyHandler(SimpleHTTPRequestHandler):
 
             # Adiciona a atividade
             else:
-                self.adicionar_atividade(codigo, descricao)
+                self.adicionar_atividade(descricao)
                 self.send_response(302)
                 self.send_header('Location', '/usuario_cadastrado')
                 self.end_headers()
