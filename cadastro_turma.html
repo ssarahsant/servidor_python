@@ -187,7 +187,7 @@
 <body>
 
     <nav>
-        <h2>Cadastro de Turmas</h2>
+        <h2>Olá Professor(a), {nome_professor}</h2>
         <a href="login" id="login">Sair</a>
     </nav>
 
@@ -199,14 +199,13 @@
             <div class="linha"></div>
 
             <div class="acoes">
-                <!-- ARRUMAR -->
                 <form action="/cad_turma" method="post">
                     <div class="input-cadastro">
                         <div class="input-turma">
-                        </div>
-                        <div class="input-turma">
                             <h4>Turma</h4>
                             <input id="item" type="text" name="turma" placeholder="Insira o nome da turma ">
+                            <input type="hidden" id="id_professor" name="id_professor" value="{id_professor}">
+                            <input type="hidden" id="login" name="login" value="{login}">
                         </div>
                         <button id="cadastro-button" type="submit">Cadastrar</button>
                     </div>
@@ -219,37 +218,7 @@
         </div>
 
         <table id="style_table">
-
-            <tr>
-                <th> ID </th>
-                <th> TURMA </th>
-                <th> AÇÃO </th>
-            </tr>
-
-            <tr>
-                <td>
-                    <p> 1 </p>
-                </td>
-                <td>
-                    <p> Digital Solutions 8</p>
-                </td>
-                <td> <button id="excluir" type="submit">Excluir</button>
-                    <button id="visualizar" type="submit">Visualizar</button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p> 2 </p>
-                </td>
-                <td>
-                    <p> Digital Solutions 9</p>
-                </td>
-                <td> <button id="excluir" type="submit">Excluir</button>
-                    <button id="visualizar" type="submit">Visualizar</button>
-                </td>
-            </tr>
-
+            <!-- teste -->
         </table>
 
     </div>

@@ -218,15 +218,58 @@ class MyHandler(SimpleHTTPRequestHandler):
         # Se NÃO tiver conteúdo retrona falso para o post  
         return False
     
-    def adicionar_turma(self, turma):
+    def adicionar_turma(self, turma, id_professor):
         cursor = conexao.cursor()
         # Comando que insere os valores no banco de dados
         cursor.execute("INSERT INTO turmas (descricao) VALUES (%s)", (turma,))
+        cursor.execute("SELECT id_turma FROM turmas WHERE descricao = %s", (turma,))
+        resultado = cursor.fetchone()
+        cursor.execute("INSERT INTO turmas_professor (id_turma, id_professor) VALUES (%s, %s)", (resultado[0], id_professor))
         conexao.commit()
         cursor.close()
  
-
     
+    # Função que irá carregar as turmas do professor  na tela
+    def carrega_turmas_professor (self, login):
+        cursor = conexao.cursor()
+        cursor.execute("SELECT id_professor, nome FROM dados_login WHERE login = %s", (login,))
+        resultado = cursor.fetchone()
+        cursor.close()
+
+        # resultado[0] atrás do id_professor e resultado[1] trás o nome do professor
+        id_professor = resultado[0]
+
+        # código para obter as turmas do professor
+        cursor = conexao.cursor()
+        cursor.execute ("SELECT turmas.id_turma, turmas.descricao FROM turmas_professor INNER JOIN turmas ON turmas_professor.id_turma = turmas.id_turma WHERE turmas_professor.id_professor = %s", (id_professor,))
+        turmas = cursor.fetchall()
+        cursor.close()
+
+        # Construindo dinamicamente as linhas da tabela com as turmas do professor
+        linhas_tabela = ""
+        for turma in turmas:
+            id_turma = turma[0]
+            descricao_turma = turma[1]
+            link_atividade = "<button id='excluir' type='submit'>Excluir</button> <button id='visualizar' type='submit'>Visualizar</button>"
+            linha = "<tr><td style='text-align:center'>{}</td><td style='text-align:center'>{}</td></tr>".format(
+                descricao_turma, link_atividade)
+            linhas_tabela += linha
+
+        with open(os.path.join(os.getcwd(), 'cadastro_turma.html'), 'r', encoding='utf-8') as cad_turma_file:
+            content = cad_turma_file.read()
+            content = content.replace('{nome_professor}', resultado[1])
+            content = content.replace('{id_professor}', str(id_professor))
+            content = content.replace('{login}', str(login))
+
+        # Substituindo o marcador de posição pelas linhas da tabela
+        content = content.replace('<!-- teste -->', linhas_tabela)
+        self.send_response(200)
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.end_headers()
+
+        self.wfile.write(content.encode('utf-8'))
+
+
     # Funções para Cadastro da Atividade
     def atividade_existente(self, descricao):
         # Atribui para uma variavel os comando do banco de dados através de uma biblioteca para  programa em python
@@ -267,13 +310,15 @@ class MyHandler(SimpleHTTPRequestHandler):
             senha = form_data.get('senha', [''])[0]
 
             if self.usuario_existente(login, senha):
-                # Responde ao cliente indicando que o usuário logou com sucesso
-                self.send_response(302)
-                self.send_header('Location', '/cad_turma')
-                self.end_headers()
-                # Adicionando um return para evitar a execução do restante do código
-                return 
-        
+                self.carrega_turmas_professor(login)
+                # Substitui pela função carregar turmas (que abrira a pagina de cadastro de turmas com as turmas existentes)
+                # # Responde ao cliente indicando que o usuário logou com sucesso
+                # self.send_response(302)
+                # self.send_header('Location', '/cad_turma')
+                # self.end_headers()
+                # # Adicionando um return para evitar a execução do restante do código
+                # return  
+                       
             else:
                 # Verifica se o usuario já está cadastrado. Caso não esteja foi caso de login errado
                 cursor = conexao.cursor()
@@ -334,8 +379,12 @@ class MyHandler(SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length).decode('utf-8')
             # Parseia os dados do formulário
             form_data = parse_qs(body, keep_blank_values=True)
-
             turma = form_data.get('turma', [''])[0]
+            id_professor = form_data.get('id_professor', [''])[0]
+            login = form_data.get('login', [''])[0]
+        
+            print(f"Cad_turma, dados do formulário {turma}, {id_professor}")
+
 
             # Verifica se o valor está vazio e da erro
             if turma.strip() == '':
@@ -355,11 +404,12 @@ class MyHandler(SimpleHTTPRequestHandler):
 
             # Adiciona a turma
             else:
-                self.adicionar_turma(turma)
-                self.send_response(302)
-                self.send_header('Location', '/usuario_cadastrado')
-                self.end_headers()
-                return
+                self.adicionar_turma(turma, id_professor)
+                self.carrega_turmas_professor(login)
+                # self.send_response(302)
+                # self.send_header('Location', '/usuario_cadastrado')
+                # self.end_headers()
+                # return
             
 
         # CADASTRAR ATIVIDADE
