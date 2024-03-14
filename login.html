@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +10,11 @@
 <body>
     <div class="login">
         <h1>LOGIN</h1>
-        <form>
+        <form action = "/enviar_login" method="post">
             <h4>E-mail</h4>
-            <input id="item" type="text" placeholder="Insira seu E-mail">
+            <input id="item" type="text" name="email" placeholder="Insira seu E-mail">
             <h4>Senha</h4>
-            <input id="item" type="password" placeholder="Insira sua senha">
+            <input id="item" type="password" name="senha" placeholder="Insira sua senha">
             <button id="item" type="submit">ENTRAR</button>
         </form>
     </div>
