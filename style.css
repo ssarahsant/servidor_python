@@ -52,7 +52,7 @@ button {
 }
 
 #visualizar {
-    background-color: #468faf;
+    background-color: #5b2a86;
     color: white;
     border: none;
     padding: 7px;
@@ -81,25 +81,6 @@ button {
     padding-left: 25px;
 }  
 
-/* Estilo do botão "Cadastrar" */
-.cadastro button {
-    background-color: #c9184a;
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px; /* Espaçamento interno do botão */
-    border-radius: 6px;
-    font-size: 18px;
-}
-
-/* Estilo do botão "Cadastrar" */
-.cadastro #sair {
-    background-color: #5b2a86;
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px; /* Espaçamento interno do botão */
-    border-radius: 6px;
-    font-size: 18px;
-}
 
 .linha {
     border-top: 2px solid #22223b;
@@ -112,3 +93,51 @@ button {
     box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
     padding: 1px;
 }
+
+/* CADASTRO TURMA */
+
+h1, h4 {
+    color: #231942;
+    margin-top: 30px;
+}
+
+.login #item {
+    align-items: center;
+}
+
+.error-message {
+    color: red;
+}
+
+.input-group {
+    display: flex;
+    gap: 40px; /* Espaçamento entre os inputs */
+}
+
+.input-wrapper {
+    flex: 1; /* Ocupa todo o espaço disponível */
+}
+
+.input-wrapper h4 {
+    margin-bottom: 5px; /* Ajuste opcional */
+}
+
+.input-wrapper input {
+    width: 100%; /* Ocupa todo o espaço disponível no input-wrapper */
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid gainsboro;
+}
+
+#cadastro-button {
+    padding: 8px 16px; /* Reduzindo o padding */
+    border-radius: 4px; /* Ajustando o raio da borda */
+    background-color: #c9184a;
+    color: #ffffff;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 50px;
+    height: 35px;
+}
+
