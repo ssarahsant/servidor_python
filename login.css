@@ -58,3 +58,7 @@ input {
 .login #item {
     align-items: center;
 }
+
+.error-message {
+    color: red;
+}

@@ -9,16 +9,18 @@
 </head>
 <body>
     <div class="login">
-        <h1>LOGIN</h1>
-        <form action = "/enviar_login" method="post">
+        <h1>CADASTRO</h1>
+        <form action = "/confirmar_cadastro" method="post">
+            <h4>Nome</h4>
+            <input id="item" type="text" name="nome" placeholder="Insira seu Nome">
             <h4>E-mail</h4>
             <input id="item" type="text" name="email" placeholder="Insira seu E-mail">
             <h4>Senha</h4>
-            <input id="item" type="password" name="senha" placeholder="Insira sua senha">
-            <div class="error-message">
+            <input id="item" type="password" name="senha" placeholder="Confirme sua senha">
+            <div class="welcome-message">
                 <!-- Mensagem de erro será inserida aqui -->
             </div>
-            <button id="item" type="submit">ENTRAR</button>
+            <button id="item" type="submit">CADASTRAR</button>
         </form>
     </div>
 </body>
