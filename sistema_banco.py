@@ -365,10 +365,12 @@ class MyHandler(SimpleHTTPRequestHandler):
             self.adicionar_usuario(login, senha, nome)
 
             # A apresenta a rota de sucesso
-            self.send_response(302)
-            self.send_header('Location', '/cad_turma')
-            self.end_headers()
-            return
+            # self.send_response(302)
+            # self.send_header('Location', '/cad_turma')
+            # self.end_headers()
+            # return
+
+            self.carrega_turmas_professor(login)
 
 
         # CADASTRAR TURMA
